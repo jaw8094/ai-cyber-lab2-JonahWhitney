@@ -239,13 +239,50 @@ def split_train_test(
     return x_train, x_test, y_train, y_test
 
 
+def _oversample_minority_class(
+    x_train: list[object], y_train: list[int], random_seed: int = 42
+) -> tuple[list[object], list[int]]:
+    """Randomly oversample the minority class in the training split only."""
+
+    if len(x_train) != len(y_train):
+        raise ValueError("x_train and y_train must have the same length.")
+    if not x_train:
+        raise ValueError("Cannot rebalance an empty training set.")
+
+    class_to_indices: dict[int, list[int]] = {}
+    for idx, label in enumerate(y_train):
+        class_to_indices.setdefault(label, []).append(idx)
+
+    if len(class_to_indices) < 2:
+        return x_train, y_train
+
+    majority_count = max(len(indices) for indices in class_to_indices.values())
+    rng = random.Random(random_seed)
+
+    balanced_indices: list[int] = []
+    for indices in class_to_indices.values():
+        balanced_indices.extend(indices)
+        needed = majority_count - len(indices)
+        if needed > 0:
+            balanced_indices.extend(rng.choices(indices, k=needed))
+
+    rng.shuffle(balanced_indices)
+    x_balanced = [x_train[i] for i in balanced_indices]
+    y_balanced = [y_train[i] for i in balanced_indices]
+    return x_balanced, y_balanced
+
+
 def split_feature_matrix_train_test(
     features: list[list[float]],
     labels: list[int],
     train_ratio: float = 0.7,
     random_seed: int = 42,
+    balance_train: bool = True,
 ) -> tuple[list[list[float]], list[list[float]], list[int], list[int]]:
-    """Split feature matrix/labels into train and test sets."""
+    """Split feature matrix/labels into train and test sets.
+
+    If `balance_train` is True, the minority class is oversampled in training data.
+    """
 
     if len(features) != len(labels):
         raise ValueError("Features and labels must have the same length.")
@@ -266,6 +303,12 @@ def split_feature_matrix_train_test(
     y_train = [labels[i] for i in train_idx]
     x_test = [features[i] for i in test_idx]
     y_test = [labels[i] for i in test_idx]
+
+    if balance_train:
+        x_train, y_train = _oversample_minority_class(
+            x_train=x_train, y_train=y_train, random_seed=random_seed
+        )
+
     return x_train, x_test, y_train, y_test
 
 
@@ -276,8 +319,12 @@ def load_and_split_phishing_dataset(
     deduplicate: bool = True,
     train_ratio: float = 0.7,
     random_seed: int = 42,
+    balance_train: bool = True,
 ) -> tuple[list[str], list[str], list[int], list[int]]:
-    """Load dataset from disk and return a shuffled train/test split."""
+    """Load dataset from disk and return a shuffled train/test split.
+
+    If `balance_train` is True, the minority class is oversampled in training data.
+    """
 
     inputs, labels = load_phishing_dataset(
         file_path=file_path,
@@ -285,12 +332,19 @@ def load_and_split_phishing_dataset(
         label_column=label_column,
         deduplicate=deduplicate,
     )
-    return split_train_test(
+    x_train, x_test, y_train, y_test = split_train_test(
         inputs=inputs,
         labels=labels,
         train_ratio=train_ratio,
         random_seed=random_seed,
     )
+
+    if balance_train:
+        x_train, y_train = _oversample_minority_class(
+            x_train=x_train, y_train=y_train, random_seed=random_seed
+        )
+
+    return x_train, x_test, y_train, y_test
 
 
 def load_and_split_feature_matrix(
@@ -300,8 +354,12 @@ def load_and_split_feature_matrix(
     deduplicate: bool = True,
     train_ratio: float = 0.7,
     random_seed: int = 42,
+    balance_train: bool = True,
 ) -> tuple[list[list[float]], list[list[float]], list[int], list[int]]:
-    """Load dataset, featurize it, and return a shuffled train/test split."""
+    """Load dataset, featurize it, and return a shuffled train/test split.
+
+    If `balance_train` is True, the minority class is oversampled in training data.
+    """
 
     features, labels = load_feature_matrix_and_labels(
         file_path=file_path,
@@ -314,4 +372,5 @@ def load_and_split_feature_matrix(
         labels=labels,
         train_ratio=train_ratio,
         random_seed=random_seed,
+        balance_train=balance_train,
     )
