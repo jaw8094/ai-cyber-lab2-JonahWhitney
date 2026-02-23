@@ -4,7 +4,7 @@ Project description:
 dataset is from kaggle at https://www.kaggle.com/datasets/taruntiwarihp/phishing-site-urls and the features that come with the dataset are just the URL and a "good" or "bad" label
   
 to run this code have pyhton installed and run _pip install -r requirements . txt_ to insure that the proper libraries are installed
-then run _python -m src.trai_n to train the model and then _python -m src.eval_ to test and generate performance metrics
+then run _python -m src.data_ to load in the dataset. Then run src _python -m src.train_ to train the model and then _python -m src.eval_ to test and generate performance metrics
 
 the baseline results are
   "accuracy": 0.8039392952344233
