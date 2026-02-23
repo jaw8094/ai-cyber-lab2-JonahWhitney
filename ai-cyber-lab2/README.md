@@ -7,9 +7,9 @@ to run this code have pyhton installed and run _pip install -r requirements . tx
 then run _python -m src.data_ to load in the dataset. Then run src _python -m src.train_ to train the model and then _python -m src.eval_ to test and generate performance metrics
 
 the baseline results are
-  "accuracy": 0.8039392952344233
-  "precision": 0.5428820813154634
-  "recall": 0.5925322679778734
-  "f1": 0.5666216057364524
+  "accuracy": 0.8028491089056258,
+  "precision": 0.5404957284172662,
+  "recall": 0.5910571604179471,
+  "f1": 0.5646468205037872
 
 Please only use this code for defensive or research reasons only. Please refrain from using this model to help generate more believable phishing URLs.
